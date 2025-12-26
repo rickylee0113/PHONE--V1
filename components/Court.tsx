@@ -6,7 +6,7 @@ interface CourtProps {
   opName: string;
   myLineup: Lineup;
   opLineup: Lineup;
-  step: 'SELECT_PLAYER' | 'SELECT_ACTION' | 'RECORD_LOCATION' | 'SELECT_RESULT';
+  step: 'SELECT_PLAYER' | 'SELECT_ACTION' | 'SELECT_QUALITY' | 'RECORD_LOCATION' | 'SELECT_RESULT';
   onPlayerClick: (pos: Position, isMyTeam: boolean, coord: Coordinate) => void;
   onLocationRecord: (start: Coordinate, end: Coordinate) => void;
 }
