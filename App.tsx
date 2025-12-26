@@ -9,8 +9,8 @@ const App: React.FC = () => {
   // Team Configuration
   const [teamConfig, setTeamConfig] = useState<TeamConfig>({
     matchName: '',
-    myName: '我方',
-    opName: '對手'
+    myName: '',
+    opName: ''
   });
 
   // Current Game State
@@ -18,8 +18,8 @@ const App: React.FC = () => {
   const [mySetWins, setMySetWins] = useState(0);
   const [opSetWins, setOpSetWins] = useState(0);
   
-  const [myLineup, setMyLineup] = useState<Lineup>({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' });
-  const [opLineup, setOpLineup] = useState<Lineup>({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' });
+  const [myLineup, setMyLineup] = useState<Lineup>(({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' }));
+  const [opLineup, setOpLineup] = useState<Lineup>(({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' }));
   const [myScore, setMyScore] = useState(0);
   const [opScore, setOpScore] = useState(0);
   const [servingTeam, setServingTeam] = useState<TeamSide>('me');
@@ -122,7 +122,7 @@ const App: React.FC = () => {
 
   // 1. COMPLETELY NEW MATCH (Reset Everything)
   const handleNewMatch = () => {
-    setTeamConfig({ matchName: '', myName: '我方', opName: '對手' });
+    setTeamConfig({ matchName: '', myName: '', opName: '' });
     setMyLineup({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' });
     setOpLineup({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' });
     setCurrentSet(1);

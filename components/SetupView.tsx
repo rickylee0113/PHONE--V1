@@ -87,8 +87,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
   const startGame = () => {
     // Use default names if empty when starting
-    const finalMyName = myName.trim() || '我方隊伍';
-    const finalOpName = opName.trim() || '對手隊伍';
+    const finalMyName = myName.trim() || '我方球隊';
+    const finalOpName = opName.trim() || '對手球隊';
     
     if (errorMsg) return;
     onStart({ matchName, myName: finalMyName, opName: finalOpName }, myLineup, opLineup, firstServe);
@@ -137,8 +137,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
                 type="text" 
                 value={opName}
                 onChange={(e) => setOpName(e.target.value)}
-                className="w-full bg-neutral-900/60 backdrop-blur-sm border border-neutral-700 text-center py-2 rounded-lg text-white focus:border-accent focus:outline-none placeholder-gray-500 font-bold"
-                placeholder="輸入對手隊伍"
+                className="w-full bg-white border border-gray-300 text-center py-2 rounded-lg text-black focus:border-accent focus:outline-none placeholder-gray-400 font-bold shadow-sm"
+                placeholder="輸入對手球隊"
             />
           </div>
           
@@ -187,8 +187,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
                 type="text" 
                 value={myName}
                 onChange={(e) => setMyName(e.target.value)}
-                className="w-full bg-neutral-900/60 backdrop-blur-sm border border-neutral-700 text-center py-2 rounded-lg text-white focus:border-accent focus:outline-none placeholder-gray-500 font-bold"
-                placeholder="輸入我方隊伍"
+                className="w-full bg-white border border-gray-300 text-center py-2 rounded-lg text-black focus:border-accent focus:outline-none placeholder-gray-400 font-bold shadow-sm"
+                placeholder="輸入我方球隊"
             />
           </div>
         </section>
