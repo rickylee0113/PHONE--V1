@@ -690,7 +690,7 @@ export const GameView: React.FC<GameViewProps> = ({
       if (!showLoadModal) return null;
       return (
           <div className="absolute inset-0 z-[110] bg-black/90 flex flex-col p-6 animate-fade-in">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-4 shrink-0">
                   <h3 className="text-white text-xl font-bold">選擇存檔</h3>
                   <button 
                     onClick={() => setShowLoadModal(false)}
@@ -719,6 +719,16 @@ export const GameView: React.FC<GameViewProps> = ({
                           </div>
                       ))
                   )}
+              </div>
+
+              {/* Large Cancel Button at Bottom */}
+              <div className="shrink-0 pt-2">
+                <button 
+                    onClick={() => setShowLoadModal(false)}
+                    className="w-full bg-neutral-700 active:bg-neutral-600 text-white font-bold py-4 rounded-xl text-lg shadow-lg border border-neutral-600"
+                >
+                    取消
+                </button>
               </div>
           </div>
       );
@@ -757,7 +767,7 @@ export const GameView: React.FC<GameViewProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-neutral-900 text-white relative">
+    <div className="flex flex-col h-full bg-neutral-900 text-white relative overflow-hidden">
       
       {/* 1. Top Bar: Tools & Scoreboard */}
       <div className="bg-neutral-800 border-b border-neutral-700 shadow-md z-10 shrink-0 flex flex-col">
@@ -908,7 +918,7 @@ export const GameView: React.FC<GameViewProps> = ({
 
       {/* 3. Bottom Controls - 4 Columns Layout */}
       {step === 'SELECT_PLAYER' && (
-        <div className="flex-none bg-neutral-900 border-t border-neutral-800 p-3 pb-8 shadow-[0_-4px_20px_rgba(0,0,0,0.8)] z-[100]">
+        <div className="flex-none bg-neutral-900 border-t border-neutral-800 p-3 pb-6 shadow-[0_-4px_20px_rgba(0,0,0,0.8)] z-[100]">
              <div className="grid grid-cols-4 gap-2 max-w-[430px] mx-auto">
                  <button 
                     type="button"

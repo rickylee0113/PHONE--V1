@@ -199,8 +199,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 flex justify-center overflow-hidden">
-      <div className="w-full max-w-[430px] bg-neutral-900 flex flex-col relative shadow-2xl border-x border-neutral-800 h-[100dvh]">
+    <div className="h-full w-full bg-neutral-900 flex justify-center">
+      <div className="w-full max-w-[430px] bg-neutral-900 flex flex-col relative shadow-2xl border-x border-neutral-800 h-full">
         {view === 'setup' ? (
           <SetupView 
             // Pass current state as initial values to persist data when coming from "Next Set"
