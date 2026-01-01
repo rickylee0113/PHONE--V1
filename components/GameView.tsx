@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lineup, TeamConfig, LogEntry, Position, ActionType, ActionQuality, ResultType, Coordinate, TeamSide, SavedGame, GameState } from '../types';
 import { Court } from './Court';
+import { StatsOverlay } from './StatsOverlay';
 
 interface GameViewProps {
   teamConfig: TeamConfig;
@@ -53,6 +54,7 @@ export const GameView: React.FC<GameViewProps> = ({
   onExit
 }) => {
   const [step, setStep] = useState<GameStep>('SELECT_PLAYER');
+  const [showStats, setShowStats] = useState(false); // Toggle Stats View
   
   // Selection States
   const [selectedPos, setSelectedPos] = useState<Position | null>(null);
@@ -382,10 +384,6 @@ export const GameView: React.FC<GameViewProps> = ({
             files.push({ key, name, date });
         }
     }
-    
-    // Sort by date new to old (assuming keys or savedAt helps, here we rely on the list order or sort manually if needed)
-    // For simplicity, let's reverse them to show newest if added sequentially, or sort by parsed date if strictly needed.
-    // Let's just list them.
     setSavedFiles(files);
     setShowLoadModal(true);
   };
@@ -436,7 +434,6 @@ export const GameView: React.FC<GameViewProps> = ({
   };
   
   const handleNewSetClick = () => {
-      // Calculate projected wins if we end this set now
       let projectedMyWins = mySetWins;
       let projectedOpWins = opSetWins;
       
@@ -489,8 +486,7 @@ export const GameView: React.FC<GameViewProps> = ({
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
     
-    // Construct Filename: [MatchName]_[MyName]_vs_[OpName]_[Date].csv
-    const dateStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const dateStr = new Date().toISOString().slice(0, 10); 
     const safeMatchName = teamConfig.matchName ? `${teamConfig.matchName}_` : '';
     const safeMyName = teamConfig.myName.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
     const safeOpName = teamConfig.opName.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
@@ -916,43 +912,53 @@ export const GameView: React.FC<GameViewProps> = ({
         />
       </div>
 
-      {/* 3. Bottom Controls - 4 Columns Layout */}
+      {/* 3. Bottom Controls - 5 Columns Layout (Added Stats Button) */}
       {step === 'SELECT_PLAYER' && (
         <div className="flex-none bg-neutral-900 border-t border-neutral-800 p-3 pb-6 shadow-[0_-4px_20px_rgba(0,0,0,0.8)] z-[100]">
-             <div className="grid grid-cols-4 gap-2 max-w-[430px] mx-auto">
+             <div className="grid grid-cols-5 gap-2 max-w-[430px] mx-auto">
                  <button 
                     type="button"
                     onClick={handleOpenSave}
-                    className="w-full h-14 bg-emerald-900 hover:bg-emerald-800 text-emerald-100 text-xs sm:text-sm rounded-lg border border-emerald-700 font-bold active:scale-95 transition-all flex flex-col sm:flex-row items-center justify-center sm:gap-2 shadow-sm cursor-pointer touch-manipulation select-none"
+                    className="w-full h-14 bg-emerald-900 hover:bg-emerald-800 text-emerald-100 text-xs sm:text-[10px] rounded-lg border border-emerald-700 font-bold active:scale-95 transition-all flex flex-col items-center justify-center gap-1 shadow-sm cursor-pointer touch-manipulation select-none"
                  >
-                    <svg className="pointer-events-none mb-1 sm:mb-0" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    <svg className="pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                     暫存
                  </button>
                  
                  <button 
                     type="button"
                     onClick={handleOpenLoad}
-                    className="w-full h-14 bg-orange-900 hover:bg-orange-800 text-orange-100 text-xs sm:text-sm rounded-lg border border-orange-700 font-bold active:scale-95 transition-all flex flex-col sm:flex-row items-center justify-center sm:gap-2 shadow-sm cursor-pointer touch-manipulation select-none"
+                    className="w-full h-14 bg-orange-900 hover:bg-orange-800 text-orange-100 text-xs sm:text-[10px] rounded-lg border border-orange-700 font-bold active:scale-95 transition-all flex flex-col items-center justify-center gap-1 shadow-sm cursor-pointer touch-manipulation select-none"
                  >
-                    <svg className="pointer-events-none mb-1 sm:mb-0" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <svg className="pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     讀取
+                 </button>
+
+                 {/* NEW STATS BUTTON */}
+                 <button 
+                    type="button"
+                    onClick={() => setShowStats(true)}
+                    className="w-full h-14 bg-neutral-700 hover:bg-neutral-600 text-white text-xs sm:text-[10px] rounded-lg border border-neutral-500 font-bold active:scale-95 transition-all flex flex-col items-center justify-center gap-1 shadow-sm cursor-pointer touch-manipulation select-none"
+                 >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    紀錄
                  </button>
 
                  <button 
                     type="button"
                     onClick={handleNewSetClick}
-                    className="w-full h-14 bg-purple-900 hover:bg-purple-800 text-purple-100 text-xs sm:text-sm rounded-lg border border-purple-700 font-bold active:scale-95 transition-all flex flex-col sm:flex-row items-center justify-center sm:gap-2 shadow-sm cursor-pointer touch-manipulation select-none"
+                    className="w-full h-14 bg-purple-900 hover:bg-purple-800 text-purple-100 text-xs sm:text-[10px] rounded-lg border border-purple-700 font-bold active:scale-95 transition-all flex flex-col items-center justify-center gap-1 shadow-sm cursor-pointer touch-manipulation select-none"
                  >
-                    <span className="text-lg font-black leading-none mb-1 sm:mb-0">+1</span>
+                    <span className="text-lg font-black leading-none">+1</span>
                     新局數
                  </button>
 
                  <button 
                     type="button"
                     onClick={handleNewGameClick}
-                    className="w-full h-14 bg-blue-900 hover:bg-blue-800 text-blue-100 text-xs sm:text-sm rounded-lg border border-blue-700 font-bold active:scale-95 transition-all flex flex-col sm:flex-row items-center justify-center sm:gap-2 shadow-sm cursor-pointer touch-manipulation select-none"
+                    className="w-full h-14 bg-blue-900 hover:bg-blue-800 text-blue-100 text-xs sm:text-[10px] rounded-lg border border-blue-700 font-bold active:scale-95 transition-all flex flex-col items-center justify-center gap-1 shadow-sm cursor-pointer touch-manipulation select-none"
                  >
-                    <svg className="pointer-events-none mb-1 sm:mb-0" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                    <svg className="pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                     新比賽
                  </button>
              </div>
@@ -967,6 +973,20 @@ export const GameView: React.FC<GameViewProps> = ({
       {renderSaveModal()}
       {renderLoadModal()}
       {renderSystemModal()}
+      
+      {/* 5. Stats Overlay */}
+      {showStats && (
+        <StatsOverlay 
+            logs={logs}
+            teamConfig={teamConfig}
+            myScore={myScore}
+            opScore={opScore}
+            mySetWins={mySetWins}
+            opSetWins={opSetWins}
+            currentSet={currentSet}
+            onBack={() => setShowStats(false)}
+        />
+      )}
     </div>
   );
 };
