@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, TeamConfig, TeamSide, ActionType, ResultType } from '../types';
+import html2canvas from 'html2canvas';
 
 interface StatsOverlayProps {
   logs: LogEntry[];
@@ -34,6 +35,7 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<TeamSide>('me');
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Helper: Filter logs for a specific team
   const getTeamLogs = (side: TeamSide) => {
@@ -113,18 +115,21 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({
   }, [logs, activeTab, teamConfig]);
 
   // Visualizer for Shot Charts
-  const renderShotChart = () => {
-    if (!selectedPlayer) return null;
-    const playerLogs = getPlayerLogs(selectedPlayer, activeTab);
+  const renderShotChart = (customLogs?: LogEntry[], isExportMode: boolean = false) => {
+    if (!selectedPlayer && !customLogs) return null;
+    
+    const logsToUse = customLogs || getPlayerLogs(selectedPlayer!, activeTab);
     
     // Filter for drawing lines: Attack & Serve only, and must have coords
-    const drawLogs = playerLogs.filter(l => 
+    const drawLogs = logsToUse.filter(l => 
         (l.action === ActionType.ATTACK || l.action === ActionType.SERVE) && 
         l.startCoord && l.endCoord
     );
 
+    const markerIdSuffix = isExportMode ? '-export' : '';
+
     return (
-      <div className="relative w-full aspect-[1/2] bg-white border-2 border-black shadow-md my-4 max-h-[400px]">
+      <div className={`relative w-full aspect-[1/2] bg-white border-2 border-black shadow-md ${isExportMode ? '' : 'my-4 max-h-[400px]'}`}>
         {/* Court Markings (Darker for white background) */}
         <div className="absolute top-[50%] w-full h-1 bg-black/80 -translate-y-1/2 z-10"></div> {/* Net */}
         <div className="absolute top-[33.33%] w-full h-0.5 bg-black/20"></div> {/* 3m */}
@@ -132,33 +137,33 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({
 
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-20">
           <defs>
-             <marker id="arrow-point-attack" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+             <marker id={`arrow-point-attack${markerIdSuffix}`} markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
                <path d="M0,0 L0,6 L6,3 z" fill="#10B981" />
              </marker>
-             <marker id="arrow-point-serve" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+             <marker id={`arrow-point-serve${markerIdSuffix}`} markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
                <path d="M0,0 L0,6 L6,3 z" fill="#3B82F6" />
              </marker>
-             <marker id="arrow-error" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+             <marker id={`arrow-error${markerIdSuffix}`} markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
                <path d="M0,0 L0,6 L6,3 z" fill="#EF4444" />
              </marker>
-             <marker id="arrow-normal" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+             <marker id={`arrow-normal${markerIdSuffix}`} markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
                <path d="M0,0 L0,6 L6,3 z" fill="#9CA3AF" />
              </marker>
           </defs>
           {drawLogs.map(l => {
             let color = '#9CA3AF'; // Default Gray
-            let markerId = 'arrow-normal';
+            let markerId = `arrow-normal${markerIdSuffix}`;
 
             if (l.result === ResultType.ERROR) {
                 color = '#EF4444'; // Red
-                markerId = 'arrow-error';
+                markerId = `arrow-error${markerIdSuffix}`;
             } else if (l.result === ResultType.POINT) {
                 if (l.action === ActionType.SERVE) {
                     color = '#3B82F6'; // Blue for Serve Aces
-                    markerId = 'arrow-point-serve';
+                    markerId = `arrow-point-serve${markerIdSuffix}`;
                 } else {
                     color = '#10B981'; // Green for Attack Kills
-                    markerId = 'arrow-point-attack';
+                    markerId = `arrow-point-attack${markerIdSuffix}`;
                 }
             }
 
@@ -198,11 +203,37 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({
 
   // Render a Single Player Stat Row
   const renderPlayerStatRow = (label: string, value: string | number, colorClass: string = 'text-slate-800') => (
-      <div className="flex justify-between items-center py-3 border-b border-slate-200">
+      <div className="flex justify-between items-center py-3 border-b border-slate-200 last:border-0">
           <span className="text-slate-500 font-bold">{label}</span>
           <span className={`text-xl font-black ${colorClass}`}>{value}</span>
       </div>
   );
+
+  // Handle Image Download
+  const handleDownloadImage = async () => {
+    const element = document.getElementById('export-card');
+    if (!element || isDownloading) return;
+
+    setIsDownloading(true);
+    try {
+        const canvas = await html2canvas(element, { 
+            scale: 2, // Higher resolution
+            backgroundColor: '#ffffff',
+            logging: false
+        });
+        
+        const link = document.createElement('a');
+        const fileName = `${teamConfig.matchName || 'match'}_set${currentSet}_P${selectedPlayer}.png`;
+        link.download = fileName;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    } catch (err) {
+        console.error('Export failed', err);
+        alert('匯出圖片失敗');
+    } finally {
+        setIsDownloading(false);
+    }
+  };
 
   return (
     <div className="absolute inset-0 z-[200] bg-white flex flex-col animate-fade-in overflow-hidden text-slate-900">
@@ -225,8 +256,22 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({
                 </button>
             )}
           </div>
-          <div className="text-slate-200 font-bold text-sm">
-             第 {currentSet} 局
+          <div className="flex items-center gap-3">
+             <div className="text-slate-200 font-bold text-sm">第 {currentSet} 局</div>
+             {selectedPlayer && (
+                 <button 
+                    onClick={handleDownloadImage}
+                    disabled={isDownloading}
+                    className="bg-accent hover:bg-blue-600 text-white p-2 rounded-lg font-bold transition-colors shadow flex items-center gap-1 text-xs"
+                 >
+                    {isDownloading ? '...' : (
+                        <>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            下載圖檔
+                        </>
+                    )}
+                 </button>
+             )}
           </div>
       </div>
 
@@ -369,8 +414,106 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({
                 </div>
             </div>
         )}
-
       </div>
+
+      {/* --- HIDDEN EXPORT CARD (A4 Layout) --- */}
+      {selectedPlayer && currentPlayerStats && (
+          <div 
+            id="export-card"
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: '-9999px',
+                width: '794px', // A4 width at 96 DPI (approx)
+                minHeight: '1123px', // A4 height
+                backgroundColor: 'white',
+                zIndex: -1,
+                padding: '40px',
+                display: 'flex',
+                flexDirection: 'column',
+                fontFamily: 'sans-serif',
+                color: '#1e293b' // slate-800
+            }}
+          >
+             {/* Header */}
+             <div className="border-b-4 border-slate-900 pb-4 mb-8 flex justify-between items-end">
+                <div>
+                    <h1 className="text-4xl font-black text-slate-900 mb-1">{teamConfig.matchName || '比賽紀錄'}</h1>
+                    <div className="text-xl font-bold text-slate-500">{new Date().toLocaleDateString()}</div>
+                </div>
+                <div className="text-right">
+                    <div className="text-lg font-bold">
+                        <span className="text-accent">{teamConfig.myName}</span>
+                        <span className="mx-2 text-slate-300">vs</span>
+                        <span className="text-red-500">{teamConfig.opName}</span>
+                    </div>
+                    <div className="text-sm text-slate-400 font-bold">VolleyScout Pro Report</div>
+                </div>
+             </div>
+
+             {/* Player Header */}
+             <div className="flex items-center gap-6 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                <div className={`w-24 h-24 rounded-full flex items-center justify-center text-5xl font-black text-white ${activeTab === 'me' ? 'bg-accent' : 'bg-red-500'}`}>
+                    {selectedPlayer}
+                </div>
+                <div>
+                    <div className="text-sm text-slate-500 font-bold uppercase tracking-widest mb-1">Player Stats</div>
+                    <div className="text-3xl font-bold text-slate-900">背號 #{selectedPlayer}</div>
+                    <div className="text-xl font-bold text-slate-500">{activeTab === 'me' ? teamConfig.myName : teamConfig.opName}</div>
+                </div>
+                <div className="ml-auto flex gap-8">
+                     <div className="text-center">
+                         <div className="text-3xl font-black text-slate-900">{currentPlayerStats.totalPoints}</div>
+                         <div className="text-xs font-bold text-slate-500 uppercase">總得分</div>
+                     </div>
+                     <div className="text-center">
+                         <div className="text-3xl font-black text-slate-900">{currentPlayerStats.attackTotal > 0 ? Math.round((currentPlayerStats.attackKills/currentPlayerStats.attackTotal)*100) : 0}%</div>
+                         <div className="text-xs font-bold text-slate-500 uppercase">攻擊率</div>
+                     </div>
+                </div>
+             </div>
+
+             {/* Content Grid */}
+             <div className="grid grid-cols-2 gap-8 flex-1">
+                 {/* Left: Stats */}
+                 <div className="flex flex-col gap-4">
+                     <h3 className="text-xl font-bold text-slate-900 border-l-4 border-accent pl-3">詳細數據</h3>
+                     <div className="bg-white border-2 border-slate-200 rounded-xl overflow-hidden">
+                        {renderPlayerStatRow("攻擊得分", currentPlayerStats.attackKills, "text-green-600")}
+                        {renderPlayerStatRow("攻擊出手", currentPlayerStats.attackTotal, "text-slate-800")}
+                        {renderPlayerStatRow("攔網得分", currentPlayerStats.blocks, "text-yellow-600")}
+                        {renderPlayerStatRow("發球得分", currentPlayerStats.serveAces, "text-blue-600")}
+                        {renderPlayerStatRow("發球失誤", currentPlayerStats.serveErrors, "text-red-500")}
+                        {renderPlayerStatRow("防守(Digs)", currentPlayerStats.digs, "text-slate-800")}
+                     </div>
+                     
+                     <div className="mt-8">
+                        <h3 className="text-xl font-bold text-slate-900 border-l-4 border-slate-400 pl-3 mb-4">圖例說明</h3>
+                        <div className="space-y-3 text-sm font-bold bg-slate-50 p-4 rounded-xl">
+                            <div className="flex items-center gap-2"><span className="w-4 h-4 rounded-full bg-green-500"></span> 攻擊得分 (Attack Kill)</div>
+                            <div className="flex items-center gap-2"><span className="w-4 h-4 rounded-full bg-blue-500"></span> 發球得分 (Serve Ace)</div>
+                            <div className="flex items-center gap-2"><span className="w-4 h-4 rounded-full bg-red-500"></span> 失誤 (Error)</div>
+                            <div className="flex items-center gap-2"><span className="w-4 h-4 rounded-full bg-slate-400"></span> 一般 (In Play)</div>
+                        </div>
+                     </div>
+                 </div>
+
+                 {/* Right: Chart */}
+                 <div className="flex flex-col">
+                     <h3 className="text-xl font-bold text-slate-900 border-l-4 border-slate-900 pl-3 mb-4">落點分析 (Shot Chart)</h3>
+                     {/* Force a fixed height for the chart in export to look good on A4 */}
+                     <div className="w-full border-4 border-black" style={{ height: '500px' }}>
+                        {renderShotChart(undefined, true)}
+                     </div>
+                 </div>
+             </div>
+
+             {/* Footer */}
+             <div className="mt-auto pt-8 border-t border-slate-200 text-center text-slate-400 text-sm font-bold">
+                 Generated by VolleyScout Pro
+             </div>
+          </div>
+      )}
     </div>
   );
 };
